@@ -10,6 +10,7 @@ from cryptography.fernet import Fernet
 import hashlib
 
 
+
 pygame.init()
 
 WIDTH, HEIGHT = 700, 800
@@ -24,10 +25,10 @@ clock = pygame.time.Clock()
 namehints = {'p':'png','j':'jpg','o':'ogg','m':'mp3','w':'wav','t':'txt'}
 f = Fernet(base64.urlsafe_b64encode(hashlib.md5('<password here>'.encode()).hexdigest().encode("utf-8")))
 info = Information()
-
+difficulty = 0
 #игра
 def start():
-
+    global difficulty
     bg = pygame.image.load('dist/data/space_2.png')
 
     pygame.init()
@@ -40,7 +41,6 @@ def start():
     info = Information()
     sc = Scores(screen_menu, info)
     bg_y = 0
-    # amo_bullets = 3
     running = True
     while running:
         screen_menu.blit(bg, (0, bg_y))
@@ -48,19 +48,22 @@ def start():
         bg_y -= 2
         if bg_y == -800:
             bg_y = 0
-        loop.events(ship, bullets, screen_menu)
+
+        loop.events(ship, bullets, screen_menu, difficulty)
         clock.tick(max_fps)
+
         if info.run_game:
 
             loop.update_screen(screen_menu, ship, bullets, ufos, info, sc)
-            loop.remove_bullets(bullets, ufos, screen_menu, sc, info)
+            loop.remove_bullets(bullets, ufos, screen_menu, sc, info, ship)
             loop.update_ufos(info, screen_menu, ship, ufos, bullets, sc)
             ship.update_ship()
+
         else:
             running = False
             fade()
             game_over()
-        if loop.events(ship, bullets, screen_menu):
+        if loop.events(ship, bullets, screen_menu, difficulty):
             fade()
             running = False
     main_menu()
@@ -70,7 +73,7 @@ def main_menu():
     play_button = Buttons(WIDTH / 2 - (252 / 2), 100, 252, 74, '', 'dist/data/play_button.png', 'dist/data/shiny_play_button.png',
                           'dist/data/button_sound.mp3')
     settings_button = Buttons(WIDTH / 2 - (252 / 2), 200, 252, 74, '', 'dist/data/options_button.png',
-                              'dist/data/shiny_options.png',
+                              'dist/data/shiny_options_button.png',
                               'dist/data/button_sound.mp3')
     quit_button = Buttons(WIDTH / 2 - (252 / 2), 300, 252, 74, '', 'dist/data/exit_button.png',
                           'dist/data/shiny_exit_button.png',
@@ -114,13 +117,28 @@ def main_menu():
 
 #меню настроек
 def settings_menu():
+
+    global difficulty
     music = [True, False]
 
-    audio_button = Buttons(WIDTH / 2 - (252 / 2), 350, 252, 74, '', 'dist/data/audio_button.png',
+    audio_button = Buttons(WIDTH / 2 - (252 / 2), 300, 252, 74, '', 'dist/data/audio_button.png',
                                'dist/data/shiny_audio_button.png',
                               'dist/data/button_sound.mp3')
 
+    easy_button = Buttons(WIDTH / 2 - (252 / 2), 400, 252, 74, '', 'dist/data/easy_button.png',
+                               'dist/data/shiny_easy_button.png',
+                              'dist/data/button_sound.mp3')
+
+    medium_button = Buttons(WIDTH / 2 - (252 / 2), 400, 252, 74, '', 'dist/data/medium_button.png',
+                               'dist/data/shiny_medium_button.png',
+                              'dist/data/button_sound.mp3')
+
+    hard_button = Buttons(WIDTH / 2 - (252 / 2), 400, 252, 74, '', 'dist/data/hard_button.png',
+                               'dist/data/shiny_hard_button.png',
+                              'dist/data/button_sound.mp3')
+    
     set_btns = [audio_button]
+    difficult_buttons = [easy_button, medium_button, hard_button]
     m_value = 2
 
     run = True
@@ -130,7 +148,7 @@ def settings_menu():
         screen_menu.blit(bg2, (0, 0))
 
         font = pygame.font.Font(None, 72)
-        text_surface = font.render('Options', True, 'purple')
+        text_surface = font.render('Settings', True, 'purple')
         text_rect = text_surface.get_rect(center=(WIDTH // 2, 50))
         screen_menu.blit(text_surface, text_rect)
 
@@ -153,19 +171,36 @@ def settings_menu():
                 if event.key == pygame.K_ESCAPE:
                     fade()
                     run = False
+
             if event.type == pygame.USEREVENT and event.button == audio_button:
                 m_value += 1
                 info.cur_music = music[m_value % 2]
                 is_music()
 
+            if event.type == pygame.USEREVENT and event.button == easy_button:
+                difficulty += 1
+
+            if event.type == pygame.USEREVENT and event.button == medium_button:
+                difficulty += 1
+
+            if event.type == pygame.USEREVENT and event.button == hard_button:
+                difficulty += 1
+
             for btn in set_btns:
                 btn.hand_event(event)
+
+            difficult_buttons[difficulty % 3].hand_event(event)
 
         for btn in set_btns:
             btn.check_hover(pygame.mouse.get_pos())
             btn.draw(screen_menu)
 
+        difficult_buttons[difficulty % 3].check_hover(pygame.mouse.get_pos())
+        difficult_buttons[difficulty % 3].draw(screen_menu)
+
+
         pygame.display.flip()
+    return difficulty
 
 #окно поражения(последнее)
 def game_over():

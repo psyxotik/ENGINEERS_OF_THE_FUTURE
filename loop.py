@@ -6,19 +6,21 @@ import time
 from window import math_quiz
 
 
+
 pygame.mixer.init()
 shoot = pygame.mixer.Sound('dist/data/laser_shot.mp3')
 ufo_boom = pygame.mixer.Sound('dist/data/ufo_dead.mp3')
 ship_boom = pygame.mixer.Sound('dist/data/ship_boom.mp3')
 shoot.set_volume(0.3)
 
-amo_bullets = 3
+amo_bullets = 10
+
 def terminate():
     pygame.quit()
     sys.exit()
 
 #обработка событий игры
-def events(ship, bullets, screen):
+def events(ship, bullets, screen, difficulty):
     menu = 0
     global amo_bullets
     for event in pygame.event.get():
@@ -37,10 +39,8 @@ def events(ship, bullets, screen):
                 shoot.play()
                 amo_bullets -= 1
                 print(amo_bullets)
-                if amo_bullets <= 0:
-                    math_quiz(amo_bullets)
-
-                    amo_bullets = 3
+                while amo_bullets <= 0:
+                    amo_bullets = math_quiz(difficulty)
                 new_bullet = Bullet(screen, ship)
                 bullets.add(new_bullet)
             if event.key == pygame.K_ESCAPE:
@@ -68,7 +68,7 @@ def update_screen(screen, ship, bullets, ufos, info, sc):
     pygame.display.flip()
 
 #убираем лишние объекты, еслли они вышли за экран
-def remove_bullets(bullets, ufos, screen, sc, info):
+def remove_bullets(bullets, ufos, screen, sc, info, ship):
     bullets.update()
     for bullet in bullets.copy():
         if bullet.rect.bottom <= 0:
@@ -84,6 +84,7 @@ def remove_bullets(bullets, ufos, screen, sc, info):
     if len(ufos) == 0:
         bullets.empty()
         create_ufos(screen, ufos)
+        ship.create_ship()
 
 #создаём группу противников
 def create_ufos(screen, ufos):
@@ -137,4 +138,5 @@ def is_hi_score(info, sc):
         sc.create_hi_score()
         with open('dist/data/score.txt', 'w') as f:
             f.write(str(info.hi_score))
+
 
